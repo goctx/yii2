@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var client = NewMemCache("127.0.0.1:11211")
+var client = NewMemCache("", 10, "127.0.0.1:11211")
 
 func TestMemCache_GetServers(t *testing.T) {
 	if client.servers[0] != "127.0.0.1:11211" {

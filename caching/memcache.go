@@ -11,12 +11,15 @@ type MemCache struct {
 	servers []string
 }
 
-func NewMemCache(servers ...string) *MemCache {
+func NewMemCache(keyPrefix string, maxConn int, servers ...string) *MemCache {
 	client := memcache.New(servers...)
-	return &MemCache{
+	m := &MemCache{
 		client:  client,
 		servers: servers,
 	}
+	m.KeyPrefix = keyPrefix
+	m.client.MaxIdleConns = maxConn
+	return m
 }
 
 func (m *MemCache) GetMemcache() *memcache.Client {
