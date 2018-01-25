@@ -50,15 +50,20 @@ func (m *MemCache) DeleteValue(key string) error {
 
 func (m *MemCache) MultiGet(keys []string) (map[string][]byte, error) {
 	data := make(map[string][]byte)
+	queryKeys := make([]string, 0)
 	for i := range keys {
-		keys[i] = m.BuildKey(keys[i])
+		queryKeys = append(queryKeys, m.BuildKey(keys[i]))
 	}
-	items, err := m.client.GetMulti(keys)
+	items, err := m.client.GetMulti(queryKeys)
 	if err != nil {
 		return nil, err
 	}
 	for key, item := range items {
-		data[key] = item.Value
+		for i, queryKey := range queryKeys {
+			if key == queryKey {
+				data[keys[i]] = item.Value
+			}
+		}
 	}
 	return data, nil
 }
