@@ -1,73 +1,47 @@
 package caching
 
 import (
-	"github.com/bradfitz/gomemcache/memcache"
+	"github.com/bmizerany/mc"
 	"time"
 )
 
 type MemCache struct {
 	Cache
-	client  *memcache.Client
-	servers []string
+	client *mc.Conn
 }
 
-func NewMemCache(keyPrefix string, maxConn int, servers ...string) *MemCache {
-	client := memcache.New(servers...)
+func NewMemCache(keyPrefix string, servers string) (*MemCache, error) {
+	client, err := mc.Dial("tcp", servers)
+	if err != nil {
+		return nil, err
+	}
 	m := &MemCache{
-		client:  client,
-		servers: servers,
+		client: client,
 	}
 	m.KeyPrefix = keyPrefix
-	m.client.MaxIdleConns = maxConn
-	return m
+	return m, nil
 }
 
-func (m *MemCache) GetMemcache() *memcache.Client {
+func (m *MemCache) GetMemcache() *mc.Conn {
 	return m.client
 }
 
-func (m *MemCache) GetServers() []string {
-	return m.servers
-}
-
 func (m *MemCache) GetValue(key string) ([]byte, error) {
-	if item, err := m.client.Get(m.BuildKey(key)); err != nil {
+	if val, _, _, err := m.client.Get(m.BuildKey(key)); err != nil {
 		return nil, err
 	} else {
-		return item.Value, nil
+		return []byte(val), nil
 	}
 }
 
 func (m *MemCache) SetValue(key string, val []byte, duration time.Duration) error {
-	item := &memcache.Item{
-		Key:        m.BuildKey(key),
-		Value:      val,
-		Expiration: int32(duration.Seconds()),
-	}
-	return m.client.Set(item)
+	return m.client.Set(key, string(val), 0, 0, int(duration.Seconds()))
 }
 
 func (m *MemCache) DeleteValue(key string) error {
-	return m.client.Delete(m.BuildKey(key))
+	return m.client.Del(m.BuildKey(key))
 }
 
-func (m *MemCache) MultiGet(keys []string) (map[string][]byte, error) {
-	data := make(map[string][]byte)
-	queryKeys := make([]string, 0)
-	for i := range keys {
-		queryKeys = append(queryKeys, m.BuildKey(keys[i]))
-	}
-	items, err := m.client.GetMulti(queryKeys)
-	if err != nil {
-		return nil, err
-	}
-	for key, item := range items {
-		for i, queryKey := range queryKeys {
-			if key == queryKey {
-				data[keys[i]] = item.Value
-				break
-			}
-		}
-	}
-	return data, nil
+func (m *MemCache) Auth(username, password string) error {
+	return m.client.Auth(username, password)
 }

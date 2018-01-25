@@ -26,6 +26,4 @@ type CacheInterface interface {
 	SetValue(key string, val []byte, duration time.Duration) (error)
 
 	DeleteValue(key string) (error)
-
-	MultiGet(keys []string) (map[string][]byte, error)
 }
