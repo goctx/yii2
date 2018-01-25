@@ -62,6 +62,7 @@ func (m *MemCache) MultiGet(keys []string) (map[string][]byte, error) {
 		for i, queryKey := range queryKeys {
 			if key == queryKey {
 				data[keys[i]] = item.Value
+				break
 			}
 		}
 	}
