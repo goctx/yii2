@@ -26,6 +26,10 @@ func (m *MemCache) GetMemcache() *mc.Conn {
 	return m.client
 }
 
+func (m *MemCache) Close() error {
+	return m.client.Close()
+}
+
 func (m *MemCache) GetValue(key string) ([]byte, error) {
 	if val, _, _, err := m.client.Get(m.BuildKey(key)); err != nil {
 		return nil, err
